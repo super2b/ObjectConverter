@@ -1,7 +1,8 @@
 package com.wblei.vo;
 
 /**
- * Created by weibolei on 13/03/2018.
+ * A mock class that stand for Http protobuf Object.
+ * Created by supber2b on 13/03/2018.
  */
 
 public class Address {

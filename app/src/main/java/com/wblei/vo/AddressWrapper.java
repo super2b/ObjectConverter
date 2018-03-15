@@ -3,10 +3,11 @@ package com.wblei.vo;
 import com.wblei.converter_annotation.Converter;
 
 /**
- * Created by weibolei on 13/03/2018.
+ * A mock class that stand for Http Result Object.
+ * Created by supber2b on 13/03/2018.
  */
 
-@Converter()
+@Converter(source = Address.class)
 public class AddressWrapper {
   private String province;
   private String city;

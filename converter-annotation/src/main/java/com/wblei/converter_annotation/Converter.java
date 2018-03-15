@@ -8,5 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 public @interface Converter {
-  String value() default "";
+  //转自于哪个函数
+  Class source();
 }
