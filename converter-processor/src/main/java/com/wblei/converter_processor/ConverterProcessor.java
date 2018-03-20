@@ -7,6 +7,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.wblei.converter_annotation.Converter;
 import java.io.IOException;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -61,6 +62,12 @@ import javax.tools.Diagnostic;
           className = value.toString();
         }
       }
+      for (Element e : element.getEnclosedElements()) {
+        log(element.getSimpleName() + "." + e.getSimpleName());
+      }
+      log("类名:" + element.getSimpleName().toString());
+      log("包名:" + element.getEnclosingElement().toString());
+      log("注解的类:" + className);
       //Get the annotationed class name. -> target class
 
       //Get the class name with annotation class. -> source class
@@ -96,9 +103,6 @@ import javax.tools.Diagnostic;
       } catch (IOException e) {
         e.printStackTrace();
       }
-      log("类名:" + element.getSimpleName().toString());
-      log("包名:" + element.getEnclosingElement().toString());
-      log("注解的类:" + className);
     }
     return false;
   }

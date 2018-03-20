@@ -9,6 +9,7 @@ public class Address {
   private String province;
   private String city;
   private String location;
+  private String others;
 
   public void setProvince(String province) {
     this.province = province;

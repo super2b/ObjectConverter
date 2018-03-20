@@ -8,7 +8,7 @@ import com.wblei.converter_annotation.Converter;
  */
 
 @Converter(source = Address.class)
-public class AddressWrapper {
+public class AddressWrapper extends SimpleWrapper {
   private String province;
   private String city;
   private String location;
