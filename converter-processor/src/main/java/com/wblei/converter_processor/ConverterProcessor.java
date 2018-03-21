@@ -79,7 +79,7 @@ import javax.tools.Diagnostic;
       Element currentClazzElement = element;
       TypeMirror parentMirror = null;
       log("------------------------------get current element's all parents");
-      while ((parentMirror = ((TypeElement) currentClazzElement).getSuperclass()) != null ) {
+      while ((parentMirror = ((TypeElement) currentClazzElement).getSuperclass()) != null) {
         if (parentMirror == null || isSdkClass(parentMirror)) {
           break;
         }
@@ -92,7 +92,8 @@ import javax.tools.Diagnostic;
       log("-----------------------------get the annotation class");
       List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
       for (AnnotationMirror annotationMirror : annotationMirrors) {
-        Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues = annotationMirror.getElementValues();
+        Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues =
+            annotationMirror.getElementValues();
 
         for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : elementValues
             .entrySet()) {
@@ -101,22 +102,21 @@ import javax.tools.Diagnostic;
           TypeMirror parentMirror2 = null;
           Element currentClazzElement2 = ((DeclaredType) val).asElement();
           log("-----------------------------fields of the annotated class:");
-          for (Element e:currentClazzElement2.getEnclosedElements()) {
-            if(e instanceof ExecutableElement) {
+          for (Element e : currentClazzElement2.getEnclosedElements()) {
+            if (e instanceof ExecutableElement) {
               log("[METHOD]" + currentClazzElement2.getSimpleName() + "." + e.getSimpleName());
-            } else if (e instanceof VariableElement){
+            } else if (e instanceof VariableElement) {
               log("[VARIABLE]" + currentClazzElement2.getSimpleName() + "." + e.getSimpleName());
             }
-
           }
-          while ((parentMirror2 = ((TypeElement)currentClazzElement2).getSuperclass()) != null) {
+          while ((parentMirror2 = ((TypeElement) currentClazzElement2).getSuperclass()) != null) {
             if (parentMirror2 == null || isSdkClass(parentMirror2)) {
               break;
             }
 
-            currentClazzElement2 = ((DeclaredType)parentMirror2).asElement();
+            currentClazzElement2 = ((DeclaredType) parentMirror2).asElement();
           }
-         ;
+          ;
         }
       }
       log("类名:" + element.getSimpleName().toString());
