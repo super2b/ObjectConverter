@@ -7,6 +7,8 @@ import com.squareup.javapoet.TypeSpec;
 import com.wblei.converter_annotation.Converter;
 import java.io.IOException;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -15,9 +17,13 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
@@ -83,6 +89,36 @@ import javax.tools.Diagnostic;
         currentClazzElement = superClazzElement;
       }
 
+      log("-----------------------------get the annotation class");
+      List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
+      for (AnnotationMirror annotationMirror : annotationMirrors) {
+        Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues = annotationMirror.getElementValues();
+
+        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : elementValues
+            .entrySet()) {
+          Object val = entry.getValue().getValue();
+
+          TypeMirror parentMirror2 = null;
+          Element currentClazzElement2 = ((DeclaredType) val).asElement();
+          log("-----------------------------fields of the annotated class:");
+          for (Element e:currentClazzElement2.getEnclosedElements()) {
+            if(e instanceof ExecutableElement) {
+              log("[METHOD]" + currentClazzElement2.getSimpleName() + "." + e.getSimpleName());
+            } else if (e instanceof VariableElement){
+              log("[VARIABLE]" + currentClazzElement2.getSimpleName() + "." + e.getSimpleName());
+            }
+
+          }
+          while ((parentMirror2 = ((TypeElement)currentClazzElement2).getSuperclass()) != null) {
+            if (parentMirror2 == null || isSdkClass(parentMirror2)) {
+              break;
+            }
+
+            currentClazzElement2 = ((DeclaredType)parentMirror2).asElement();
+          }
+         ;
+        }
+      }
       log("类名:" + element.getSimpleName().toString());
       log("包名:" + element.getEnclosingElement().toString());
       log("注解的类:" + className);
