@@ -12,7 +12,7 @@ public class AddressWrapper extends SimpleWrapper {
   private String province;
   private String city;
   private String location;
-
+  private String other2;
   public void setProvince(String province) {
     this.province = province;
   }

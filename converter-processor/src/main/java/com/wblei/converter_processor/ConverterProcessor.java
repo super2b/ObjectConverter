@@ -7,7 +7,6 @@ import com.squareup.javapoet.TypeSpec;
 import com.wblei.converter_annotation.Converter;
 import java.io.IOException;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -19,6 +18,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -27,6 +27,8 @@ import javax.tools.Diagnostic;
 /**
  * Created by superb2b on 13/03/2018.
  */
+//TODO: 1.获取注解类的所有属性
+// TODO 2.获取被注解类的所有属性
 @AutoService(Processor.class) public class ConverterProcessor extends AbstractProcessor {
   private Filer filter;
   private Messager mMessager;
@@ -62,9 +64,25 @@ import javax.tools.Diagnostic;
           className = value.toString();
         }
       }
+      //Can only get the currently class's fields
+      log("------------------------------get current element's all fields and methods");
       for (Element e : element.getEnclosedElements()) {
         log(element.getSimpleName() + "." + e.getSimpleName());
       }
+
+      Element currentClazzElement = element;
+      TypeMirror parentMirror = null;
+      log("------------------------------get current element's all parents");
+      while ((parentMirror = ((TypeElement) currentClazzElement).getSuperclass()) != null ) {
+        if (parentMirror == null || isSdkClass(parentMirror)) {
+          break;
+        }
+        Element superClazzElement = ((DeclaredType) parentMirror).asElement();
+        log("parent class of:" + element.getSimpleName() + ":" + superClazzElement.getSimpleName()
+            .toString());
+        currentClazzElement = superClazzElement;
+      }
+
       log("类名:" + element.getSimpleName().toString());
       log("包名:" + element.getEnclosingElement().toString());
       log("注解的类:" + className);
@@ -105,6 +123,13 @@ import javax.tools.Diagnostic;
       }
     }
     return false;
+  }
+
+  private boolean isSdkClass(TypeMirror typeMirror) {
+    if (typeMirror == null) {
+      throw new IllegalArgumentException("wrong argument");
+    }
+    return typeMirror.toString().startsWith("java.");
   }
 
   private void generateJavaClass(String clazzName) throws IOException {
