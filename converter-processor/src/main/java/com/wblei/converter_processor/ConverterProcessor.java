@@ -6,6 +6,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import com.wblei.converter_annotation.Converter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,18 +24,13 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.MirroredTypeException;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 /**
  * Created by superb2b on 13/03/2018.
  */
-//TODO: 1.获取注解类的所有属性
-// TODO 2.获取被注解类的所有属性
 @AutoService(Processor.class) public class ConverterProcessor extends AbstractProcessor {
   private Filer filter;
   private Messager mMessager;
@@ -60,73 +56,43 @@ import javax.tools.Diagnostic;
   @Override
   public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
     for (Element element : roundEnvironment.getElementsAnnotatedWith(Converter.class)) {
-      String className = null;
-      TypeMirror value = null;
-      try {
-        className = element.getAnnotation(Converter.class).source().toString();
-      } catch (MirroredTypeException e) {
-        value = e.getTypeMirror();
-        if (value != null) {
-          className = value.toString();
-        }
-      }
-      //Can only get the currently class's fields
-      log("------------------------------get current element's all fields and methods");
-      for (Element e : element.getEnclosedElements()) {
-        log(element.getSimpleName() + "." + e.getSimpleName());
-      }
 
-      Element currentClazzElement = element;
-      TypeMirror parentMirror = null;
-      log("------------------------------get current element's all parents");
-      while ((parentMirror = ((TypeElement) currentClazzElement).getSuperclass()) != null) {
-        if (parentMirror == null || isSdkClass(parentMirror)) {
-          break;
-        }
-        Element superClazzElement = ((DeclaredType) parentMirror).asElement();
-        log("parent class of:" + element.getSimpleName() + ":" + superClazzElement.getSimpleName()
-            .toString());
-        currentClazzElement = superClazzElement;
-      }
+      /*
+       * Get the class name with annotation class. -> source class
+       */
+      Map<String, List<String>> fieldsMap = ElementHelper.getInstance().getElement(element);
+      Map<String, List<String>> superClazzFieldsMap =
+          ElementHelper.getInstance().loopSuperClasses(element);
+      Map<String, List<String>> allFieldsMap = new HashMap<>();
+      allFieldsMap.putAll(fieldsMap);
+      allFieldsMap.putAll(superClazzFieldsMap);
+      log("all fields of annotated:" + allFieldsMap.toString());
 
-      log("-----------------------------get the annotation class");
+      /*
+       * Get the annotationed class name. -> target class
+       */
       List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
+      Map<String, List<String>> allAnnotatedMap = new HashMap<>();
       for (AnnotationMirror annotationMirror : annotationMirrors) {
         Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues =
             annotationMirror.getElementValues();
-
         for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : elementValues
             .entrySet()) {
           Object val = entry.getValue().getValue();
-
-          TypeMirror parentMirror2 = null;
-          Element currentClazzElement2 = ((DeclaredType) val).asElement();
-          log("-----------------------------fields of the annotated class:");
-          for (Element e : currentClazzElement2.getEnclosedElements()) {
-            if (e instanceof ExecutableElement) {
-              log("[METHOD]" + currentClazzElement2.getSimpleName() + "." + e.getSimpleName());
-            } else if (e instanceof VariableElement) {
-              log("[VARIABLE]" + currentClazzElement2.getSimpleName() + "." + e.getSimpleName());
-            }
-          }
-          while ((parentMirror2 = ((TypeElement) currentClazzElement2).getSuperclass()) != null) {
-            if (parentMirror2 == null || isSdkClass(parentMirror2)) {
-              break;
-            }
-
-            currentClazzElement2 = ((DeclaredType) parentMirror2).asElement();
-          }
-          ;
+          Element annoElement = ((DeclaredType) val).asElement();
+          Map<String, List<String>> annoFieldsMap =
+              ElementHelper.getInstance().getElement(annoElement);
+          Map<String, List<String>> annSuperClazzFieldsMap =
+              ElementHelper.getInstance().loopSuperClasses(annoElement);
+          allAnnotatedMap.putAll(annoFieldsMap);
+          allAnnotatedMap.putAll(annSuperClazzFieldsMap);
         }
       }
-      log("类名:" + element.getSimpleName().toString());
-      log("包名:" + element.getEnclosingElement().toString());
-      log("注解的类:" + className);
-      //Get the annotationed class name. -> target class
+      log("all fields of annotation class:" + allAnnotatedMap.toString());
 
-      //Get the class name with annotation class. -> source class
-
+      log("className:" + element.getSimpleName().toString());
       //Get the package of the annotationed class -> pkg
+      log("pkg:" + element.getEnclosingElement().toString());
 
       // Generate a class with package name {pkg} and class name with {target_class_name}_Converter
 
@@ -159,13 +125,6 @@ import javax.tools.Diagnostic;
       }
     }
     return false;
-  }
-
-  private boolean isSdkClass(TypeMirror typeMirror) {
-    if (typeMirror == null) {
-      throw new IllegalArgumentException("wrong argument");
-    }
-    return typeMirror.toString().startsWith("java.");
   }
 
   private void generateJavaClass(String clazzName) throws IOException {
