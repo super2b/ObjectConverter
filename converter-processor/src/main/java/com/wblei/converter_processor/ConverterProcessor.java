@@ -60,15 +60,15 @@ import javax.tools.Diagnostic;
       /*
        * Get the class name with annotation class. -> source class
        */
-      Map<String, List<String>> allFieldsMap =
-          ElementHelper.getInstance().loopClassAllFields(element);
-      log("all fields of annotated:" + allFieldsMap.toString());
+      ObjectElements objectElements =
+          ElementHelper.getInstance().loopClassAllFields(element, new AnnClassFieldMethodChecker());
+      log("all fields of annotated:" + objectElements.toString());
 
       /*
        * Get the annotationed class name. -> target class
        */
       List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
-      Map<String, List<String>> allAnnotatedMap = new HashMap<>();
+      ObjectElements superObjElements = null;
       for (AnnotationMirror annotationMirror : annotationMirrors) {
         Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues =
             annotationMirror.getElementValues();
@@ -76,12 +76,11 @@ import javax.tools.Diagnostic;
             .entrySet()) {
           Object val = entry.getValue().getValue();
           Element annoElement = ((DeclaredType) val).asElement();
-          Map<String, List<String>> allAnnFieldsMap =
-              ElementHelper.getInstance().loopClassAllFields(annoElement);
-          allAnnotatedMap.putAll(allAnnFieldsMap);
+          superObjElements = ElementHelper.getInstance()
+              .loopClassAllFields(annoElement, new AnnVaClassFieldMethodChecker());
         }
       }
-      log("all fields of annotation class:" + allAnnotatedMap.toString());
+      log("all fields of annotation class:" + superObjElements.toString());
 
       log("className:" + element.getSimpleName().toString());
       //Get the package of the annotationed class -> pkg

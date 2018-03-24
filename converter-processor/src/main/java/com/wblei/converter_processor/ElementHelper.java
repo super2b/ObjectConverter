@@ -18,8 +18,6 @@ import javax.lang.model.type.TypeMirror;
 
 public class ElementHelper {
   private static ElementHelper instance;
-  private static final String SET_METHOD_PREFIX = "set";
-  private static final String GET_METHOD_PREFIX = "get";
 
   private ElementHelper() {
   }
@@ -32,22 +30,46 @@ public class ElementHelper {
   }
 
   /**
+   * looper all the class's(include super classes) fields.
+   * @param element
+   * @return all super's fields and getter|setter methods.
+   */
+  public ObjectElements loopClassAllFields(Element element, FieldMethodChecker checker) {
+    ObjectElements obj = getElement(element);
+    Element currentClazzElement = element;
+    TypeMirror parentMirror = null;
+    while ((parentMirror = ((TypeElement) currentClazzElement).getSuperclass()) != null) {
+      if (parentMirror == null || isSdkClass(parentMirror)) {
+        break;
+      }
+      Element superClazzElement = ((DeclaredType) parentMirror).asElement();
+      ObjectElements superObj = getElement(superClazzElement);
+      obj.appendFields(superObj.getFields());
+      obj.appendMethods(superObj.getMethods());
+      currentClazzElement = superClazzElement;
+    }
+    checker.checkFieldsAndMethods(obj.getFields(), obj.getMethods());
+    return obj;
+  }
+
+  /**
    * get the fields and getter/setter method
    * @param element
-   * @return a map with classname as key, and list of fields & getter|setter methods as value.
+   * @return ObjectElements object.
    */
-  private Map<String, List<String>> getElement(Element element) {
+  private ObjectElements getElement(Element element) {
     if (element == null) {
       return null;
     }
-    Map<String, List<String>> map = new HashMap<>();
     List<String> fields = new ArrayList<>();
+    List<String> methods = new ArrayList<>();
     for (Element e : element.getEnclosedElements()) {
       //Only take care of the ExecutableElement and VariableElement.
       String fieldName = e.getSimpleName().toString();
 
-      if (isValidMethod(e, SET_METHOD_PREFIX, GET_METHOD_PREFIX)
-          || (e instanceof VariableElement)) {
+      if (isValidMethod(e, Constant.SET_METHOD_PREFIX, Constant.GET_METHOD_PREFIX)) {
+        methods.add(fieldName);
+      } else if(e instanceof VariableElement) {
         PBField pbFieldAnnotation = e.getAnnotation(PBField.class);
         if (pbFieldAnnotation != null) {
           String mapName = pbFieldAnnotation.name();
@@ -59,8 +81,11 @@ public class ElementHelper {
         fields.add(fieldName);
       }
     }
-    map.put(element.getSimpleName().toString(), fields);
-    return map;
+    ObjectElements obj = new ObjectElements();
+    obj.setClassName(element.getSimpleName().toString());
+    obj.setFields(fields);
+    obj.setMethods(methods);
+    return obj;
   }
 
   /**
@@ -79,27 +104,6 @@ public class ElementHelper {
       }
     }
     return false;
-  }
-
-  /**
-   * looper all the class's(include super classes) fields.
-   * @param element
-   * @return all super's fields and getter|setter methods.
-   */
-  public Map<String, List<String>> loopClassAllFields(Element element) {
-    Map<String, List<String>> map = new HashMap();
-    map.putAll(getElement(element));
-    Element currentClazzElement = element;
-    TypeMirror parentMirror = null;
-    while ((parentMirror = ((TypeElement) currentClazzElement).getSuperclass()) != null) {
-      if (parentMirror == null || isSdkClass(parentMirror)) {
-        break;
-      }
-      Element superClazzElement = ((DeclaredType) parentMirror).asElement();
-      map.putAll(getElement(superClazzElement));
-      currentClazzElement = superClazzElement;
-    }
-    return map;
   }
 
   /**
