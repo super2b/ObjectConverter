@@ -1,4 +1,4 @@
-package com.wblei.converter_processor;
+package com.wblei.converter_processor.object;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +9,8 @@ import java.util.List;
 
 public class ObjectElements {
   private String className;
-  private List<String> fields;
-  private List<String> methods;
+  private List<FieldElement> fields;
+  private List<MethodElement> methods;
 
   public void setClassName(String className) {
     this.className = className;
@@ -20,34 +20,34 @@ public class ObjectElements {
     return className;
   }
 
-  public void setFields(List<String> fields) {
+  public void setFields(List<FieldElement> fields) {
     this.fields = fields;
   }
 
-  public void appendFields(List<String> fields) {
+  public void appendFields(List<FieldElement> fields) {
     if (this.fields == null) {
       this.fields = new ArrayList<>();
     }
     this.fields.addAll(fields);
   }
 
-  public List<String> getFields() {
+  public List<FieldElement> getFields() {
     return fields;
   }
 
-  public void setMethods(List<String> methods) {
+  public void setMethods(List<MethodElement> methods) {
     this.methods = methods;
   }
 
 
-  public void appendMethods(List<String> methods) {
+  public void appendMethods(List<MethodElement> methods) {
     if (this.methods == null) {
       this.methods = new ArrayList<>();
     }
     this.methods.addAll(methods);
   }
 
-  public List<String> getMethods() {
+  public List<MethodElement> getMethods() {
     return methods;
   }
 

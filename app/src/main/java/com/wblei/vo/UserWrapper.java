@@ -11,7 +11,7 @@ public class UserWrapper extends CommonVo {
 
   private String userName;
   private String password;
-
+  private int age;
 
   public void setPassword(String password) {
     this.password = password;
@@ -27,5 +27,13 @@ public class UserWrapper extends CommonVo {
 
   public String getUserName() {
     return userName;
+  }
+
+  public void setAge(int age) {
+    this.age = age;
+  }
+
+  public int getAge() {
+    return age;
   }
 }

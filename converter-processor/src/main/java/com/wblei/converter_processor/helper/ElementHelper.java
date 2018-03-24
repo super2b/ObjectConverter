@@ -1,12 +1,17 @@
-package com.wblei.converter_processor;
+package com.wblei.converter_processor.helper;
 
 import com.wblei.converter_annotation.PBField;
+import com.wblei.converter_processor.Constant;
+import com.wblei.converter_processor.checker.FieldMethodChecker;
+import com.wblei.converter_processor.object.FieldElement;
+import com.wblei.converter_processor.object.MethodElement;
+import com.wblei.converter_processor.object.ObjectElements;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -32,6 +37,7 @@ public class ElementHelper {
   /**
    * looper all the class's(include super classes) fields.
    * @param element
+   * @param checker: element and field checker.
    * @return all super's fields and getter|setter methods.
    */
   public ObjectElements loopClassAllFields(Element element, FieldMethodChecker checker) {
@@ -48,7 +54,7 @@ public class ElementHelper {
       obj.appendMethods(superObj.getMethods());
       currentClazzElement = superClazzElement;
     }
-    checker.checkFieldsAndMethods(obj.getFields(), obj.getMethods());
+    checker.checkFieldsAndMethods(obj.getClassName(), obj.getFields(), obj.getMethods());
     return obj;
   }
 
@@ -61,14 +67,19 @@ public class ElementHelper {
     if (element == null) {
       return null;
     }
-    List<String> fields = new ArrayList<>();
-    List<String> methods = new ArrayList<>();
+    List<FieldElement> fields = new ArrayList<>();
+    List<MethodElement> methods = new ArrayList<>();
     for (Element e : element.getEnclosedElements()) {
-      //Only take care of the ExecutableElement and VariableElement.
+      //Only take care of the ExecutableElement and FieldElement.
       String fieldName = e.getSimpleName().toString();
 
       if (isValidMethod(e, Constant.SET_METHOD_PREFIX, Constant.GET_METHOD_PREFIX)) {
-        methods.add(fieldName);
+        MethodElement m = new MethodElement();
+        Set<Modifier> modifiers = e.getModifiers();
+        m.setModifier(modifiers.size()>0? modifiers.iterator().next() : null);
+        m.setName(e.getSimpleName().toString());
+        m.setReturnType(((ExecutableElement)e).getReturnType().toString());
+        methods.add(m);
       } else if(e instanceof VariableElement) {
         PBField pbFieldAnnotation = e.getAnnotation(PBField.class);
         if (pbFieldAnnotation != null) {
@@ -78,7 +89,11 @@ public class ElementHelper {
             fieldName = mapName;
           }
         }
-        fields.add(fieldName);
+        FieldElement f = new FieldElement();
+        f.setName(fieldName);
+        Set<Modifier> modifiers = e.getModifiers();
+        f.setModifier(modifiers.size()>0? modifiers.iterator().next() : null);
+        fields.add(f);
       }
     }
     ObjectElements obj = new ObjectElements();

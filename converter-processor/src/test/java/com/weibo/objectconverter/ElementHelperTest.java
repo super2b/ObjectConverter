@@ -1,6 +1,6 @@
 package com.weibo.objectconverter;
 
-import com.wblei.converter_processor.ElementHelper;
+import com.wblei.converter_processor.helper.ElementHelper;
 import org.junit.Before;
 import org.junit.Test;
 

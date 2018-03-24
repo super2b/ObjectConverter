@@ -1,7 +1,11 @@
-package com.wblei.converter_processor;
+package com.wblei.converter_processor.checker;
 
+import com.wblei.converter_processor.Constant;
+import com.wblei.converter_processor.object.FieldElement;
+import com.wblei.converter_processor.object.MethodElement;
 import java.util.ArrayList;
 import java.util.List;
+import javax.lang.model.element.Modifier;
 
 /**
  * Check if the fields and related method is complete.
@@ -11,17 +15,34 @@ import java.util.List;
  */
 
 public abstract class FieldMethodChecker {
-  public void checkFieldsAndMethods(List<String> fields, List<String> methods) {
-    List<String> failedFields = new ArrayList<>();
-    for(String f : fields) {
-      List<String> generateMethods = camel(f);
-      if (methods.indexOf(generateMethods.get(checkPos())) < 0) {
-        failedFields.add(f);
+  public void checkFieldsAndMethods(String name, List<FieldElement> fields, List<MethodElement> methods) {
+    List<FieldElement> failedFields = new ArrayList<>();
+    List<MethodElement> failedMethods = new ArrayList<>();
+    for(FieldElement f : fields) {
+      List<String> generateMethods = camel(f.getName());
+
+      for (int i = 0; i < methods.size(); i++) {
+        MethodElement m = methods.get(i);
+        if (generateMethods.get(checkPos()).equals(m.getName())) {
+          if (m.getModifier() != Modifier.PUBLIC) {
+            failedMethods.add(m);
+          }
+          break;
+        }
+        if (i == methods.size() - 1) {
+          failedFields.add(f);
+        }
       }
     }
 
     if (failedFields.size() > 0) {
-      throw new IllegalArgumentException("the following field need setter method:" + failedFields);
+      throw new IllegalArgumentException(
+          name + ": the following field need setter method:" + failedFields);
+    }
+
+    if (failedMethods.size() > 0) {
+      throw new IllegalArgumentException(
+          name + ": the following method should be public:" + failedMethods);
     }
   }
 
