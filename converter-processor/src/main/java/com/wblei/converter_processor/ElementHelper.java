@@ -1,5 +1,6 @@
 package com.wblei.converter_processor;
 
+import com.wblei.converter_annotation.PBField;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +48,14 @@ public class ElementHelper {
 
       if (isValidMethod(e, SET_METHOD_PREFIX, GET_METHOD_PREFIX)
           || (e instanceof VariableElement)) {
+        PBField pbFieldAnnotation = e.getAnnotation(PBField.class);
+        if (pbFieldAnnotation != null) {
+          String mapName = pbFieldAnnotation.name();
+          // If the PBField annotation name is specified, just replace the exists field.
+          if (null != mapName && !"".equals(mapName)) {
+            fieldName = mapName;
+          }
+        }
         fields.add(fieldName);
       }
     }

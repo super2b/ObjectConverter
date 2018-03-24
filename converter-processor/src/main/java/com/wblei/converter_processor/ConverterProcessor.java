@@ -94,6 +94,8 @@ import javax.tools.Diagnostic;
       //Get the package of the annotationed class -> pkg
       log("pkg:" + element.getEnclosingElement().toString());
 
+      // list all the methods and fields
+
       // Generate a class with package name {pkg} and class name with {target_class_name}_Converter
 
       // Generate a method

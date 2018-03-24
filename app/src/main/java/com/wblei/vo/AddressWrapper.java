@@ -1,6 +1,7 @@
 package com.wblei.vo;
 
 import com.wblei.converter_annotation.Converter;
+import com.wblei.converter_annotation.PBField;
 
 /**
  * A mock class that stand for Http Result Object.
@@ -12,7 +13,9 @@ public class AddressWrapper extends SimpleWrapper {
   private String province;
   private String city;
   private String location;
+  @PBField(name="others")
   private String other2;
+
   public void setProvince(String province) {
     this.province = province;
   }
