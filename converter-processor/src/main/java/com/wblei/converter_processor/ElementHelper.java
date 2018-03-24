@@ -36,7 +36,7 @@ public class ElementHelper {
    * @param element
    * @return a map with classname as key, and list of fields & getter|setter methods as value.
    */
-  public Map<String, List<String>> getElement(Element element) {
+  private Map<String, List<String>> getElement(Element element) {
     if (element == null) {
       return null;
     }
@@ -82,12 +82,13 @@ public class ElementHelper {
   }
 
   /**
-   * looper all the super class's fields.
+   * looper all the class's(include super classes) fields.
    * @param element
    * @return all super's fields and getter|setter methods.
    */
-  public Map<String, List<String>> loopSuperClasses(Element element) {
+  public Map<String, List<String>> loopClassAllFields(Element element) {
     Map<String, List<String>> map = new HashMap();
+    map.putAll(getElement(element));
     Element currentClazzElement = element;
     TypeMirror parentMirror = null;
     while ((parentMirror = ((TypeElement) currentClazzElement).getSuperclass()) != null) {

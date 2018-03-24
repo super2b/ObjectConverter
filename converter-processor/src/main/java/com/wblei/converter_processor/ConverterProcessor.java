@@ -60,12 +60,8 @@ import javax.tools.Diagnostic;
       /*
        * Get the class name with annotation class. -> source class
        */
-      Map<String, List<String>> fieldsMap = ElementHelper.getInstance().getElement(element);
-      Map<String, List<String>> superClazzFieldsMap =
-          ElementHelper.getInstance().loopSuperClasses(element);
-      Map<String, List<String>> allFieldsMap = new HashMap<>();
-      allFieldsMap.putAll(fieldsMap);
-      allFieldsMap.putAll(superClazzFieldsMap);
+      Map<String, List<String>> allFieldsMap =
+          ElementHelper.getInstance().loopClassAllFields(element);
       log("all fields of annotated:" + allFieldsMap.toString());
 
       /*
@@ -80,12 +76,9 @@ import javax.tools.Diagnostic;
             .entrySet()) {
           Object val = entry.getValue().getValue();
           Element annoElement = ((DeclaredType) val).asElement();
-          Map<String, List<String>> annoFieldsMap =
-              ElementHelper.getInstance().getElement(annoElement);
-          Map<String, List<String>> annSuperClazzFieldsMap =
-              ElementHelper.getInstance().loopSuperClasses(annoElement);
-          allAnnotatedMap.putAll(annoFieldsMap);
-          allAnnotatedMap.putAll(annSuperClazzFieldsMap);
+          Map<String, List<String>> allAnnFieldsMap =
+              ElementHelper.getInstance().loopClassAllFields(annoElement);
+          allAnnotatedMap.putAll(allAnnFieldsMap);
         }
       }
       log("all fields of annotation class:" + allAnnotatedMap.toString());
