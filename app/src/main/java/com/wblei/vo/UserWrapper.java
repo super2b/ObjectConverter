@@ -1,6 +1,7 @@
 package com.wblei.vo;
 
 import com.wblei.converter_annotation.Converter;
+import com.wblei.converter_annotation.PBField;
 
 /**
  * stand for http result.
@@ -8,8 +9,6 @@ import com.wblei.converter_annotation.Converter;
  */
 @Converter(source = User.class)
 public class UserWrapper extends CommonVo {
-
-  private String userName;
   private String password;
   private int age;
 
@@ -19,14 +18,6 @@ public class UserWrapper extends CommonVo {
 
   public String getPassword() {
     return password;
-  }
-
-  public void setUserName(String userName) {
-    this.userName = userName;
-  }
-
-  public String getUserName() {
-    return userName;
   }
 
   public void setAge(int age) {

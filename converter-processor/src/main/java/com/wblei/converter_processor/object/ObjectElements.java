@@ -1,5 +1,6 @@
 package com.wblei.converter_processor.object;
 
+import com.squareup.javapoet.ClassName;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,15 +9,15 @@ import java.util.List;
  */
 
 public class ObjectElements {
-  private String className;
+  private ClassName className;
   private List<FieldElement> fields;
   private List<MethodElement> methods;
 
-  public void setClassName(String className) {
+  public void setClassName(ClassName className) {
     this.className = className;
   }
 
-  public String getClassName() {
+  public ClassName getClassName() {
     return className;
   }
 

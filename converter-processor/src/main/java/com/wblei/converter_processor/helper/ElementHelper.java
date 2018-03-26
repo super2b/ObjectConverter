@@ -1,5 +1,6 @@
 package com.wblei.converter_processor.helper;
 
+import com.squareup.javapoet.ClassName;
 import com.wblei.converter_annotation.PBField;
 import com.wblei.converter_processor.Constant;
 import com.wblei.converter_processor.checker.FieldMethodChecker;
@@ -36,7 +37,7 @@ public class ElementHelper {
 
   /**
    * looper all the class's(include super classes) fields.
-   * @param element
+   *
    * @param checker: element and field checker.
    * @return all super's fields and getter|setter methods.
    */
@@ -54,13 +55,13 @@ public class ElementHelper {
       obj.appendMethods(superObj.getMethods());
       currentClazzElement = superClazzElement;
     }
-    checker.checkFieldsAndMethods(obj.getClassName(), obj.getFields(), obj.getMethods());
+    checker.checkFieldsAndMethods(obj.getClassName().toString(), obj.getFields(), obj.getMethods());
     return obj;
   }
 
   /**
    * get the fields and getter/setter method
-   * @param element
+   *
    * @return ObjectElements object.
    */
   private ObjectElements getElement(Element element) {
@@ -76,11 +77,11 @@ public class ElementHelper {
       if (isValidMethod(e, Constant.SET_METHOD_PREFIX, Constant.GET_METHOD_PREFIX)) {
         MethodElement m = new MethodElement();
         Set<Modifier> modifiers = e.getModifiers();
-        m.setModifier(modifiers.size()>0? modifiers.iterator().next() : null);
+        m.setModifier(modifiers.size() > 0 ? modifiers.iterator().next() : null);
         m.setName(e.getSimpleName().toString());
-        m.setReturnType(((ExecutableElement)e).getReturnType().toString());
+        m.setReturnType(((ExecutableElement) e).getReturnType().toString());
         methods.add(m);
-      } else if(e instanceof VariableElement) {
+      } else if (e instanceof VariableElement) {
         PBField pbFieldAnnotation = e.getAnnotation(PBField.class);
         if (pbFieldAnnotation != null) {
           String mapName = pbFieldAnnotation.name();
@@ -92,12 +93,14 @@ public class ElementHelper {
         FieldElement f = new FieldElement();
         f.setName(fieldName);
         Set<Modifier> modifiers = e.getModifiers();
-        f.setModifier(modifiers.size()>0? modifiers.iterator().next() : null);
+        f.setModifier(modifiers.size() > 0 ? modifiers.iterator().next() : null);
         fields.add(f);
       }
     }
     ObjectElements obj = new ObjectElements();
-    obj.setClassName(element.getSimpleName().toString());
+    String simpleName = element.getSimpleName().toString();
+    ClassName className = ClassName.get(element.getEnclosingElement().toString(), simpleName);
+    obj.setClassName(className);
     obj.setFields(fields);
     obj.setMethods(methods);
     return obj;
@@ -105,11 +108,12 @@ public class ElementHelper {
 
   /**
    * Check if the method in ExecutableElement starts with one of the methodPrefixes
+   *
    * @param element element object
    * @param methodPrefixes method prefix list
    * @return true if the the element is a method and start with one of the method prefixes.
    */
-  private boolean isValidMethod(Element element, String ... methodPrefixes) {
+  private boolean isValidMethod(Element element, String... methodPrefixes) {
     if (element instanceof ExecutableElement) {
       String fieldName = element.getSimpleName().toString();
       for (String prefix : methodPrefixes) {
@@ -123,7 +127,7 @@ public class ElementHelper {
 
   /**
    * Check if the typemirror reference to a sdk class.
-   * @param typeMirror
+   *
    * @return true if it's sdk class.
    */
   private boolean isSdkClass(TypeMirror typeMirror) {
@@ -132,5 +136,4 @@ public class ElementHelper {
     }
     return typeMirror.toString().startsWith("java") || typeMirror.toString().startsWith("android.");
   }
-
 }

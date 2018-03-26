@@ -1,6 +1,8 @@
 package com.wblei.converter_processor;
 
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -8,6 +10,7 @@ import com.wblei.converter_annotation.Converter;
 import com.wblei.converter_processor.checker.AnnClassFieldMethodChecker;
 import com.wblei.converter_processor.checker.AnnVaClassFieldMethodChecker;
 import com.wblei.converter_processor.helper.ElementHelper;
+import com.wblei.converter_processor.object.MethodElement;
 import com.wblei.converter_processor.object.ObjectElements;
 import java.io.IOException;
 import java.util.LinkedHashSet;
@@ -68,26 +71,22 @@ import javax.tools.Diagnostic;
       log("all fields of annotated:" + objectElements.toString());
 
       /*
-       * Get the annotationed class name. -> target class
+       * Get the annotated class name. -> target class
        */
       List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
-      ObjectElements superObjElements = null;
+      ObjectElements annObjElements = null;
       for (AnnotationMirror annotationMirror : annotationMirrors) {
         Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues =
             annotationMirror.getElementValues();
         for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : elementValues
             .entrySet()) {
           Object val = entry.getValue().getValue();
-          Element annoElement = ((DeclaredType) val).asElement();
-          superObjElements = ElementHelper.getInstance()
-              .loopClassAllFields(annoElement, new AnnVaClassFieldMethodChecker());
+          Element annElement = ((DeclaredType) val).asElement();
+          annObjElements = ElementHelper.getInstance()
+              .loopClassAllFields(annElement, new AnnVaClassFieldMethodChecker());
         }
       }
-      log("all fields of annotation class:" + superObjElements.toString());
-
-      log("className:" + element.getSimpleName().toString());
-      //Get the package of the annotationed class -> pkg
-      log("pkg:" + element.getEnclosingElement().toString());
+      log("all fields of annotation class:" + annObjElements.toString());
 
       // list all the methods and fields
 
@@ -116,7 +115,12 @@ import javax.tools.Diagnostic;
 
       //
       try {
-        generateJavaClass("HelloWorld");
+        String clazzName = element.getSimpleName().toString();
+        //Get the package of the annotated class -> pkg
+        String pkgName = element.getEnclosingElement().toString();
+        generateJavaClass(pkgName, clazzName, annObjElements.getClassName(),
+            objectElements.getClassName(), annObjElements.getMethods(),
+            objectElements.getMethods());
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -124,17 +128,49 @@ import javax.tools.Diagnostic;
     return false;
   }
 
-  private void generateJavaClass(String clazzName) throws IOException {
-    MethodSpec main = MethodSpec.methodBuilder("main")
-        .addParameter(String[].class, "args")
-        .addStatement("$T.out.println($S)", System.class, clazzName)
+  private void generateJavaClass(String pkgName, String clazzName, ClassName p1, ClassName p2,
+      List<MethodElement> source, List<MethodElement> target) throws IOException {
+    MethodSpec main = MethodSpec.methodBuilder("convert")
+        .addModifiers(Modifier.PUBLIC)
+        .addParameter(p1, "source")
+        .addParameter(p2, "target")
+        .addStatement(brewCode(source, target))
         .build();
-    TypeSpec typeSpec = TypeSpec.classBuilder("HelloWorld")
+    TypeSpec typeSpec = TypeSpec.classBuilder(clazzName + "_Converter")
         .addMethod(main)
         .addModifiers(Modifier.FINAL, Modifier.PUBLIC)
         .build();
-    JavaFile javaFile = JavaFile.builder("com.example.helloworld", typeSpec).build();
+    JavaFile javaFile = JavaFile.builder(pkgName, typeSpec)
+        .addFileComment("Generated code from ObjectConverter. Do not modify")
+        .build();
     javaFile.writeTo(filter);
+  }
+
+  private CodeBlock brewCode(List<MethodElement> sourceMethods, List<MethodElement> targetMethods) {
+    CodeBlock.Builder builder = CodeBlock.builder();
+    StringBuilder sb = null;
+    for (MethodElement m : targetMethods) {
+      int index = -1;
+      if (m.getName().startsWith(Constant.GET_METHOD_PREFIX)) {
+        continue;
+      }
+      for (int i = 0; i < sourceMethods.size(); i++) {
+        if (sb == null ) {
+          sb = new StringBuilder(sourceMethods.get(i).getName());
+        } else {
+          sb.replace(0, sb.length(), sourceMethods.get(i).getName());
+        }
+        String sourceField = sb.substring(3);
+        sb.replace(0, sb.length(), m.getName());
+        String targetField = sb.substring(3);
+        if (sourceField.equals(targetField)) {
+          index = i;
+          builder.add("target.$L(source.$L());\n", m.getName(), sourceMethods.get(i).getName());
+          break;
+        }
+      }
+    }
+    return builder.build();
   }
 
   private void log(String msg) {

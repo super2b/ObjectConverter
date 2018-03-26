@@ -6,9 +6,9 @@ package com.wblei.vo;
  */
 
 public class User {
+  private int age_;
   private String name_;
   private String password_;
-  private String nickName_;
 
   public String getName() {
     return this.name_;
@@ -18,7 +18,7 @@ public class User {
     return this.password_;
   }
 
-  public String getNickName() {
-    return this.nickName_;
+  public int getAge() {
+    return this.age_;
   }
 }
