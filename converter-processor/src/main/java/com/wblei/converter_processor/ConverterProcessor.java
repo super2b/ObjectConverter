@@ -133,6 +133,9 @@ import javax.tools.Diagnostic;
         continue;
       }
       for (int i = 0; i < sourceMethods.size(); i++) {
+        if(sourceMethods.get(i).getName().startsWith(Constant.SET_METHOD_PREFIX)) {
+          continue;
+        }
         if (sb == null ) {
           sb = new StringBuilder(sourceMethods.get(i).getName());
         } else {
