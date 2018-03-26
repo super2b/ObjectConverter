@@ -1,6 +1,7 @@
 package com.wblei.converter_processor;
 
 import com.google.auto.service.AutoService;
+import com.google.googlejavaformat.java.Formatter;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
@@ -88,32 +89,6 @@ import javax.tools.Diagnostic;
       }
       log("all fields of annotation class:" + annObjElements.toString());
 
-      // list all the methods and fields
-
-      // Generate a class with package name {pkg} and class name with {target_class_name}_Converter
-
-      // Generate a method
-      //  TargetClazz Convert():
-      //    List<Field> targetFields;
-      //    List<Field> sourceFields;
-      //    for(f:targetClassFields){
-      //      if (isNormalJavaType(f)) {
-      //        if (sourceHasFieldWithSameName) {
-      //          try {
-      //            generateJavaCode("target.setF(targetClass.f)"）;
-      //          } catch(Exception) {
-      //            generateJavaCode("target.setF(targetClass.getF()));
-      //          }
-      //        }
-      //      } else if (isList(f)) {
-      //        targetRealType = f.getRealType();
-      //        sourceRealType = sf.getRealType();
-      //        recursionGenerateFor(o1, o2);
-      //      }
-      //    }
-      //
-
-      //
       try {
         String clazzName = element.getSimpleName().toString();
         //Get the package of the annotated class -> pkg
@@ -130,12 +105,14 @@ import javax.tools.Diagnostic;
 
   private void generateJavaClass(String pkgName, String clazzName, ClassName p1, ClassName p2,
       List<MethodElement> source, List<MethodElement> target) throws IOException {
-    MethodSpec main = MethodSpec.methodBuilder("convert")
+
+    MethodSpec.Builder builder = MethodSpec.methodBuilder("convert")
         .addModifiers(Modifier.PUBLIC)
         .addParameter(p1, "source")
-        .addParameter(p2, "target")
-        .addStatement(brewCode(source, target))
-        .build();
+        .addParameter(p2, "target");
+    brewCode(builder, source, target);
+    MethodSpec main = builder.build();
+
     TypeSpec typeSpec = TypeSpec.classBuilder(clazzName + "_Converter")
         .addMethod(main)
         .addModifiers(Modifier.FINAL, Modifier.PUBLIC)
@@ -146,11 +123,12 @@ import javax.tools.Diagnostic;
     javaFile.writeTo(filter);
   }
 
-  private CodeBlock brewCode(List<MethodElement> sourceMethods, List<MethodElement> targetMethods) {
-    CodeBlock.Builder builder = CodeBlock.builder();
+  private void brewCode(MethodSpec.Builder builder, List<MethodElement> sourceMethods,
+      List<MethodElement> targetMethods) {
     StringBuilder sb = null;
     for (MethodElement m : targetMethods) {
       int index = -1;
+      //Ignore the getter method.
       if (m.getName().startsWith(Constant.GET_METHOD_PREFIX)) {
         continue;
       }
@@ -165,12 +143,11 @@ import javax.tools.Diagnostic;
         String targetField = sb.substring(3);
         if (sourceField.equals(targetField)) {
           index = i;
-          builder.add("target.$L(source.$L());\n", m.getName(), sourceMethods.get(i).getName());
+          builder.addStatement("target.$L(source.$L())", m.getName(), sourceMethods.get(i).getName());
           break;
         }
       }
     }
-    return builder.build();
   }
 
   private void log(String msg) {
