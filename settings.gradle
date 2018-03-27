@@ -1,1 +1,1 @@
-include ':app', ':converter-annotation', ':converter-processor'
+include ':app', ':converter-annotation', ':converter-processor', ':converter'

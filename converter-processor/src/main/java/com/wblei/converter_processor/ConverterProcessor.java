@@ -1,12 +1,12 @@
 package com.wblei.converter_processor;
 
 import com.google.auto.service.AutoService;
-import com.google.googlejavaformat.java.Formatter;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 import com.wblei.converter_annotation.Converter;
 import com.wblei.converter_processor.checker.AnnClassFieldMethodChecker;
 import com.wblei.converter_processor.checker.AnnVaClassFieldMethodChecker;
@@ -14,6 +14,7 @@ import com.wblei.converter_processor.helper.ElementHelper;
 import com.wblei.converter_processor.object.MethodElement;
 import com.wblei.converter_processor.object.ObjectElements;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -90,10 +91,8 @@ import javax.tools.Diagnostic;
       log("all fields of annotation class:" + annObjElements.toString());
 
       try {
-        String clazzName = element.getSimpleName().toString();
         //Get the package of the annotated class -> pkg
-        String pkgName = element.getEnclosingElement().toString();
-        generateJavaClass(pkgName, clazzName, annObjElements.getClassName(),
+        generateJavaClass(annObjElements.getClassName(),
             objectElements.getClassName(), annObjElements.getMethods(),
             objectElements.getMethods());
       } catch (IOException e) {
@@ -103,21 +102,28 @@ import javax.tools.Diagnostic;
     return false;
   }
 
-  private void generateJavaClass(String pkgName, String clazzName, ClassName p1, ClassName p2,
-      List<MethodElement> source, List<MethodElement> target) throws IOException {
+  ClassName ICONVERTER = ClassName.get("com.wblei.converter", "IConverter");
 
+  private void generateJavaClass(ClassName p1, ClassName p2,
+      List<MethodElement> source, List<MethodElement> target) throws IOException {
     MethodSpec.Builder builder = MethodSpec.methodBuilder("convert")
         .addModifiers(Modifier.PUBLIC)
         .addParameter(p1, "source")
-        .addParameter(p2, "target");
+        .addStatement("$T target = new $T()", p2, p2)
+        .returns(p2);
     brewCode(builder, source, target);
+    builder.addStatement("return target");
     MethodSpec main = builder.build();
 
-    TypeSpec typeSpec = TypeSpec.classBuilder(clazzName + "_Converter")
+    ParameterizedTypeName pt =
+        ParameterizedTypeName.get(ICONVERTER, TypeVariableName.get(p1.simpleName()),
+            TypeVariableName.get(p2.simpleName()));
+    TypeSpec typeSpec = TypeSpec.classBuilder(p2.simpleName() + "_Converter")
         .addMethod(main)
+        .addSuperinterface(pt)
         .addModifiers(Modifier.FINAL, Modifier.PUBLIC)
         .build();
-    JavaFile javaFile = JavaFile.builder(pkgName, typeSpec)
+    JavaFile javaFile = JavaFile.builder(p2.packageName(), typeSpec)
         .addFileComment("Generated code from ObjectConverter. Do not modify")
         .build();
     javaFile.writeTo(filter);
