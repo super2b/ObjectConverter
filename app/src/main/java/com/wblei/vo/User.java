@@ -10,6 +10,12 @@ public class User {
   private String name_;
   private String password_;
 
+  public User(String name, String password, int age) {
+    this.age_ = age;
+    this.name_ = name;
+    this.password_ = password;
+  }
+
   public String getName() {
     return this.name_;
   }

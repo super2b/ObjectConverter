@@ -5,7 +5,7 @@ package com.wblei.converter;
  */
 
 public class ObjectConvert2 {
-  public Object tryToConvert(String clazzName, Object sourceObj) {
+  public static Object tryToConvert(String clazzName, Object sourceObj) {
     try {
       Class clazz = Class.forName(clazzName + "_Converter");
       Object obj = clazz.newInstance();

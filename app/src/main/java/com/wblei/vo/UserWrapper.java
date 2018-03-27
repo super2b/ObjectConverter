@@ -27,4 +27,8 @@ public class UserWrapper extends CommonVo {
   public int getAge() {
     return age;
   }
+
+  @Override public String toString() {
+    return "name:" + getName() + ", password:" + getPassword() + ", age:" + getAge();
+  }
 }
