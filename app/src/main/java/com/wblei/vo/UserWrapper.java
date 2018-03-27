@@ -11,6 +11,8 @@ import com.wblei.converter_annotation.PBField;
 public class UserWrapper extends CommonVo {
   private String password;
   private int age;
+  @PBField(name = "address")
+  private String location;
 
   public void setPassword(String password) {
     this.password = password;
@@ -26,6 +28,14 @@ public class UserWrapper extends CommonVo {
 
   public int getAge() {
     return age;
+  }
+
+  public String getLocation() {
+    return location;
+  }
+
+  public void setLocation(String location) {
+    this.location = location;
   }
 
   @Override public String toString() {

@@ -14,7 +14,7 @@ import com.wblei.converter_processor.helper.ElementHelper;
 import com.wblei.converter_processor.object.MethodElement;
 import com.wblei.converter_processor.object.ObjectElements;
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +43,7 @@ import javax.tools.Diagnostic;
   private Filer filter;
   private Messager mMessager;
   private Elements mElementUtils;
+  private MethodElement sourceMethod;
 
   @Override public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
@@ -92,9 +93,7 @@ import javax.tools.Diagnostic;
 
       try {
         //Get the package of the annotated class -> pkg
-        generateJavaClass(annObjElements.getClassName(),
-            objectElements.getClassName(), annObjElements.getMethods(),
-            objectElements.getMethods());
+        generateJavaClass(annObjElements, objectElements);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -104,55 +103,66 @@ import javax.tools.Diagnostic;
 
   ClassName ICONVERTER = ClassName.get("com.wblei.converter", "IConverter");
 
-  private void generateJavaClass(ClassName p1, ClassName p2,
-      List<MethodElement> source, List<MethodElement> target) throws IOException {
+  private void generateJavaClass(ObjectElements soruceObj, ObjectElements targetObj)
+      throws IOException {
     MethodSpec.Builder builder = MethodSpec.methodBuilder("convert")
         .addModifiers(Modifier.PUBLIC)
-        .addParameter(p1, "source")
-        .addStatement("$T target = new $T()", p2, p2)
-        .returns(p2);
-    brewCode(builder, source, target);
+        .addParameter(soruceObj.getClassName(), "source")
+        .addStatement("$T target = new $T()", targetObj.getClassName(), targetObj.getClassName())
+        .returns(targetObj.getClassName());
+    brewCode(builder, soruceObj, targetObj);
     builder.addStatement("return target");
     MethodSpec main = builder.build();
 
-    ParameterizedTypeName pt =
-        ParameterizedTypeName.get(ICONVERTER, TypeVariableName.get(p1.simpleName()),
-            TypeVariableName.get(p2.simpleName()));
-    TypeSpec typeSpec = TypeSpec.classBuilder(p2.simpleName() + "_Converter")
+    ParameterizedTypeName pt = ParameterizedTypeName.get(ICONVERTER,
+        TypeVariableName.get(soruceObj.getClassName().simpleName()),
+        TypeVariableName.get(targetObj.getClassName().simpleName()));
+    TypeSpec typeSpec = TypeSpec.classBuilder(targetObj.getClassName().simpleName() + "_Converter")
         .addMethod(main)
         .addSuperinterface(pt)
         .addModifiers(Modifier.FINAL, Modifier.PUBLIC)
         .build();
-    JavaFile javaFile = JavaFile.builder(p2.packageName(), typeSpec)
+    JavaFile javaFile = JavaFile.builder(targetObj.getClassName().packageName(), typeSpec)
         .addFileComment("Generated code from ObjectConverter. Do not modify")
         .build();
     javaFile.writeTo(filter);
   }
 
-  private void brewCode(MethodSpec.Builder builder, List<MethodElement> sourceMethods,
-      List<MethodElement> targetMethods) {
+  private void brewCode(MethodSpec.Builder builder, ObjectElements sourceObj,
+      ObjectElements targetObj) {
     StringBuilder sb = null;
+    List<MethodElement> targetMethods = targetObj.getMethods();
+    List<MethodElement> sourceMethods = sourceObj.getMethods();
     for (MethodElement m : targetMethods) {
       int index = -1;
       //Ignore the getter method.
       if (m.getName().startsWith(Constant.GET_METHOD_PREFIX)) {
         continue;
       }
+      Map<String, String> map = targetObj.getMappingField();
       for (int i = 0; i < sourceMethods.size(); i++) {
-        if(sourceMethods.get(i).getName().startsWith(Constant.SET_METHOD_PREFIX)) {
+        sourceMethod = sourceMethods.get(i);
+        if (sourceMethod.getName().startsWith(Constant.SET_METHOD_PREFIX)) {
           continue;
         }
-        if (sb == null ) {
-          sb = new StringBuilder(sourceMethods.get(i).getName());
+        if (sb == null) {
+          sb = new StringBuilder(sourceMethod.getName());
         } else {
-          sb.replace(0, sb.length(), sourceMethods.get(i).getName());
+          sb.replace(0, sb.length(), sourceMethod.getName());
         }
         String sourceField = sb.substring(3);
         sb.replace(0, sb.length(), m.getName());
         String targetField = sb.substring(3);
-        if (sourceField.equals(targetField)) {
+        if (map != null) {
+          String tmp = map.get(targetField.toLowerCase());
+          if (tmp != null && tmp.trim().length() > 0) {
+            targetField = tmp;
+          }
+        }
+        if (sourceField.equalsIgnoreCase(targetField)) {
           index = i;
-          builder.addStatement("target.$L(source.$L())", m.getName(), sourceMethods.get(i).getName());
+          builder.addStatement("target.$L(source.$L())", m.getName(),
+              sourceMethod.getName());
           break;
         }
       }

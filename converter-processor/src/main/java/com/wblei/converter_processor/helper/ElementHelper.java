@@ -8,7 +8,9 @@ import com.wblei.converter_processor.object.FieldElement;
 import com.wblei.converter_processor.object.MethodElement;
 import com.wblei.converter_processor.object.ObjectElements;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -68,12 +70,12 @@ public class ElementHelper {
     if (element == null) {
       return null;
     }
+    Map<String, String> mappingFields = new HashMap<>();
     List<FieldElement> fields = new ArrayList<>();
     List<MethodElement> methods = new ArrayList<>();
     for (Element e : element.getEnclosedElements()) {
       //Only take care of the ExecutableElement and FieldElement.
       String fieldName = e.getSimpleName().toString();
-
       if (isValidMethod(e, Constant.SET_METHOD_PREFIX, Constant.GET_METHOD_PREFIX)) {
         MethodElement m = new MethodElement();
         Set<Modifier> modifiers = e.getModifiers();
@@ -83,21 +85,24 @@ public class ElementHelper {
         methods.add(m);
       } else if (e instanceof VariableElement) {
         PBField pbFieldAnnotation = e.getAnnotation(PBField.class);
+        FieldElement f = new FieldElement();
         if (pbFieldAnnotation != null) {
           String mapName = pbFieldAnnotation.name();
           // If the PBField annotation name is specified, just replace the exists field.
-          if (null != mapName && !"".equals(mapName)) {
-            fieldName = mapName;
-          }
+          mappingFields.put(fieldName.toLowerCase(), mapName);
         }
-        FieldElement f = new FieldElement();
+
         f.setName(fieldName);
         Set<Modifier> modifiers = e.getModifiers();
         f.setModifier(modifiers.size() > 0 ? modifiers.iterator().next() : null);
+
         fields.add(f);
       }
     }
     ObjectElements obj = new ObjectElements();
+    if (mappingFields.size() > 0) {
+      obj.setMappingField(mappingFields);
+    }
     String simpleName = element.getSimpleName().toString();
     ClassName className = ClassName.get(element.getEnclosingElement().toString(), simpleName);
     obj.setClassName(className);

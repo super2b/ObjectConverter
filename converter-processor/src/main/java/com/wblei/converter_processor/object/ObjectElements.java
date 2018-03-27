@@ -2,7 +2,9 @@ package com.wblei.converter_processor.object;
 
 import com.squareup.javapoet.ClassName;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by super2b on 25/03/2018.
@@ -12,6 +14,8 @@ public class ObjectElements {
   private ClassName className;
   private List<FieldElement> fields;
   private List<MethodElement> methods;
+  //The mapped field.
+  private Map<String, String> mappingField;
 
   public void setClassName(ClassName className) {
     this.className = className;
@@ -48,8 +52,23 @@ public class ObjectElements {
     this.methods.addAll(methods);
   }
 
+  public void appendMappingField(Map<String, String> mappingField) {
+    if (this.mappingField == null) {
+      this.mappingField = new HashMap<>();
+    }
+    this.mappingField.putAll(mappingField);
+  }
+
   public List<MethodElement> getMethods() {
     return methods;
+  }
+
+  public Map<String, String> getMappingField() {
+    return this.mappingField;
+  }
+
+  public void setMappingField(Map mappingField) {
+    this.mappingField = mappingField;
   }
 
   @Override public String toString() {

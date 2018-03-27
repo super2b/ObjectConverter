@@ -13,6 +13,7 @@ public class UserWrapper_Converter_DEMO  implements IConverter<User, UserWrapper
     target.setPassword(source.getPassword());
     target.setName(source.getName());
     target.setName(source.getName());
+    target.setLocation(source.getAddress());
     return target;
   }
 

@@ -9,6 +9,7 @@ public class User {
   private int age_;
   private String name_;
   private String password_;
+  private String address;
 
   public User(String name, String password, int age) {
     this.age_ = age;
@@ -26,5 +27,13 @@ public class User {
 
   public int getAge() {
     return this.age_;
+  }
+
+  public String getAddress() {
+    return address;
+  }
+
+  public void setAddress(String address) {
+    this.address = address;
   }
 }
