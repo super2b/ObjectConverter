@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity {
     setContentView(R.layout.activity_main);
     findViewById(R.id.btn).setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        User user = new User("leiweibo", "123123lei", 1);
+        User user = new User("super2b", "super2b", 1);
 
         Object obj = ObjectConvert2.tryToConvert(UserWrapper.class.getName(), user);
         if (obj instanceof UserWrapper) {
