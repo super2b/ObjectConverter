@@ -81,6 +81,12 @@ public class ElementHelper {
         Set<Modifier> modifiers = e.getModifiers();
         m.setModifier(modifiers.size() > 0 ? modifiers.iterator().next() : null);
         m.setName(e.getSimpleName().toString());
+        //NOTE: Here just care the first parameter.
+        if (((ExecutableElement) e).getParameters().size() > 0) {
+          String parameterType = ((ExecutableElement) e).getParameters().get(0).asType().toString();
+          m.setParameterType(parameterType);
+        }
+
         m.setReturnType(((ExecutableElement) e).getReturnType().toString());
         methods.add(m);
       } else if (e instanceof VariableElement) {

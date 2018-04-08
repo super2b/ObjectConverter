@@ -10,11 +10,12 @@ import com.squareup.javapoet.TypeVariableName;
 import com.wblei.converter_annotation.Converter;
 import com.wblei.converter_processor.checker.AnnClassFieldMethodChecker;
 import com.wblei.converter_processor.checker.AnnVaClassFieldMethodChecker;
+import com.wblei.converter_processor.checker.CheckRule;
 import com.wblei.converter_processor.helper.ElementHelper;
 import com.wblei.converter_processor.object.MethodElement;
 import com.wblei.converter_processor.object.ObjectElements;
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,13 +65,22 @@ import javax.tools.Diagnostic;
 
   @Override
   public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
+    AnnClassFieldMethodChecker annClassFieldMethodChecker = new AnnClassFieldMethodChecker();
+    AnnVaClassFieldMethodChecker annVaClassFieldMethodChecker = new AnnVaClassFieldMethodChecker();
+    CheckRule checkRule = new CheckRule();
+    List<Modifier> modifiers = new ArrayList<>();
+    modifiers.add(Modifier.PRIVATE);
+    checkRule.setEndWith("_");
+    checkRule.setModifiers(modifiers);
+    annVaClassFieldMethodChecker.setCheckRule(checkRule);
+
     for (Element element : roundEnvironment.getElementsAnnotatedWith(Converter.class)) {
 
       /*
        * Get the class name with annotation class. -> source class
        */
       ObjectElements objectElements =
-          ElementHelper.getInstance().loopClassAllFields(element, new AnnClassFieldMethodChecker());
+          ElementHelper.getInstance().loopClassAllFields(element, annClassFieldMethodChecker);
       log("all fields of annotated:" + objectElements.toString());
 
       /*
@@ -86,7 +96,7 @@ import javax.tools.Diagnostic;
           Object val = entry.getValue().getValue();
           Element annElement = ((DeclaredType) val).asElement();
           annObjElements = ElementHelper.getInstance()
-              .loopClassAllFields(annElement, new AnnVaClassFieldMethodChecker());
+              .loopClassAllFields(annElement, annVaClassFieldMethodChecker);
         }
       }
       log("all fields of annotation class:" + annObjElements.toString());
@@ -103,19 +113,19 @@ import javax.tools.Diagnostic;
 
   ClassName ICONVERTER = ClassName.get("com.wblei.converter", "IConverter");
 
-  private void generateJavaClass(ObjectElements soruceObj, ObjectElements targetObj)
+  private void generateJavaClass(ObjectElements sourceObj, ObjectElements targetObj)
       throws IOException {
     MethodSpec.Builder builder = MethodSpec.methodBuilder("convert")
         .addModifiers(Modifier.PUBLIC)
-        .addParameter(soruceObj.getClassName(), "source")
+        .addParameter(sourceObj.getClassName(), "source")
         .addStatement("$T target = new $T()", targetObj.getClassName(), targetObj.getClassName())
         .returns(targetObj.getClassName());
-    brewCode(builder, soruceObj, targetObj);
+    brewCode(builder, sourceObj, targetObj);
     builder.addStatement("return target");
     MethodSpec main = builder.build();
 
     ParameterizedTypeName pt = ParameterizedTypeName.get(ICONVERTER,
-        TypeVariableName.get(soruceObj.getClassName().simpleName()),
+        TypeVariableName.get(sourceObj.getClassName().simpleName()),
         TypeVariableName.get(targetObj.getClassName().simpleName()));
     TypeSpec typeSpec = TypeSpec.classBuilder(targetObj.getClassName().simpleName() + "_Converter")
         .addMethod(main)
@@ -161,8 +171,23 @@ import javax.tools.Diagnostic;
         }
         if (sourceField.equalsIgnoreCase(targetField)) {
           index = i;
-          builder.addStatement("target.$L(source.$L())", m.getName(),
-              sourceMethod.getName());
+
+          if (m.getParameterType().equals(sourceMethod.getReturnType())) {
+            builder.addStatement("target.$L(source.$L())", m.getName(),
+                sourceMethod.getName());
+          } else if (m.getParameterType().equals("java.lang.String")) {
+            if (sourceMethod.getReturnType().equals("com.google.protobuf.ByteString")) {
+              builder.addStatement("try { \ntarget.$L(new String(source.$L().toByteArray(), \"GBK\")); \n} catch(Exception e) {}",
+                  m.getName(), sourceMethod.getName());
+            } else {
+              builder.addStatement("target.$L(String.valueOf(source.$L()))", m.getName(),
+                  sourceMethod.getName());
+            }
+          } else {
+            builder.addStatement("target.$L(source.$L())", m.getName(),
+                sourceMethod.getName());
+          }
+
           break;
         }
       }

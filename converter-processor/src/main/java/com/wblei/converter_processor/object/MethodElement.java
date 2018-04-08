@@ -10,6 +10,7 @@ public class MethodElement {
   private String name;
   private Modifier modifier;
   private String returnType;
+  private String parameterType;
 
   public void setName(String name) {
     this.name = name;
@@ -33,6 +34,14 @@ public class MethodElement {
 
   public String getReturnType() {
     return returnType;
+  }
+
+  public void setParameterType(String parameterType) {
+    this.parameterType = parameterType;
+  }
+
+  public String getParameterType() {
+    return parameterType;
   }
 
   @Override public String toString() {

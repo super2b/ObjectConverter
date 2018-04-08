@@ -15,10 +15,26 @@ import javax.lang.model.element.Modifier;
  */
 
 public abstract class FieldMethodChecker {
+
+  private CheckRule checkRule;
+
   public void checkFieldsAndMethods(String name, List<FieldElement> fields, List<MethodElement> methods) {
     List<FieldElement> failedFields = new ArrayList<>();
     List<MethodElement> failedMethods = new ArrayList<>();
     for(FieldElement f : fields) {
+      if (checkRule != null) {
+        List<Modifier> modifiers = checkRule.getModifiers();
+        String endWith = checkRule.getEndWith();
+        if (modifiers != null && modifiers.size() > 0) {
+          if (modifiers.indexOf(f.getModifier()) < 0) {
+            continue;
+          }
+        }
+        if ((endWith != null && !endWith.trim().equals("")) && !endWith.endsWith(
+            f.getName())) {
+          continue;
+        }
+      }
       List<String> generateMethods = camel(f.getName());
 
       for (int i = 0; i < methods.size(); i++) {
@@ -44,6 +60,10 @@ public abstract class FieldMethodChecker {
       throw new IllegalArgumentException(
           name + ": the following method should be public:" + failedMethods);
     }
+  }
+
+  public void setCheckRule(CheckRule rule) {
+    this.checkRule = rule;
   }
 
   protected abstract int checkPos();
