@@ -54,6 +54,14 @@ public class ElementHelper {
       Element superClazzElement = ((DeclaredType) parentMirror).asElement();
       ObjectElements superObj = getElement(superClazzElement);
       obj.appendFields(superObj.getFields());
+      if (superObj.getMappingField() != null) {
+        if (obj.getMappingField() != null) {
+          obj.getMappingField().putAll(superObj.getMappingField());
+        } else {
+          obj.setMappingField(superObj.getMappingField());
+        }
+      }
+
       obj.appendMethods(superObj.getMethods());
       currentClazzElement = superClazzElement;
     }
